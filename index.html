@@ -248,6 +248,16 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4zwPgZEVfhK7cyCJse2sVvWhA6EallpGSAej_eEPUnvu2-E2NGuiHHlqUq9QHTxrZiw/exec";
         let stockData = [];
 
+        // ฟังก์ชันแปลงรูปแบบวันที่ให้เหลือแค่ YYYY-MM-DD
+        function formatDateOnly(dateStr) {
+            if (!dateStr) return '-';
+            let str = String(dateStr);
+            if (str.includes('T')) {
+                str = str.split('T')[0];
+            }
+            return str;
+        }
+
         // Realtime Clock
         function updateClock() {
             const now = new Date();
@@ -327,7 +337,6 @@
                 note: document.getElementById('in-note').value
             };
 
-            // Check duplicate lot
             const existingIndex = stockData.findIndex(item => item.id === lot);
             if (existingIndex > -1) {
                 stockData[existingIndex].bags += newItem.bags;
@@ -409,7 +418,8 @@
                 totalBags += item.bags;
                 totalOz += (item.bags * item.amountOz);
 
-                const expDate = new Date(item.expiresAt);
+                const cleanExpDateStr = formatDateOnly(item.expiresAt);
+                const expDate = new Date(cleanExpDateStr);
                 expDate.setHours(0, 0, 0, 0);
                 const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
 
@@ -423,10 +433,10 @@
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-700">#${item.id}</td>
-                    <td class="p-3">${item.producedAt}</td>
+                    <td class="p-3">${formatDateOnly(item.producedAt)}</td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded text-xs font-semibold ${diffDays < 0 ? 'bg-rose-100 text-rose-600' : (diffDays <= 10 ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600')}">
-                            ${item.expiresAt}
+                            ${cleanExpDateStr}
                         </span>
                     </td>
                     <td class="p-3 text-center font-bold text-pink-600">${item.bags}</td>
@@ -447,7 +457,6 @@
             document.getElementById('dash-expired').innerText = expiredCount;
         }
 
-        // Updated Save & Sync with Web App using Text Blob (bypass CORS restrictions)
         function saveAndSync() {
             localStorage.setItem('breastmilk_stock', JSON.stringify(stockData));
             const payload = JSON.stringify({ currentStock: stockData });
