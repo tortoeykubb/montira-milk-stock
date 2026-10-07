@@ -24,612 +24,562 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+        /* Pin Code Input Styling */
+        .pin-box {
+            width: 3.2rem;
+            height: 3.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb;
+            transition: all 0.2s ease-in-out;
+        }
+        .pin-box:focus {
+            border-color: #ec4899;
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+            outline: none;
+        }
     </style>
 </head>
-<body class="min-h-screen text-slate-700 pb-12">
+<body class="min-h-screen pb-12">
 
-    <header class="bg-pink-500 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
             <div class="flex items-center space-x-3">
-                <div class="bg-white p-2 rounded-full text-pink-500 shadow">
-                    <i class="fa-solid font-bold text-2xl fa-baby"></i>
+                <div class="bg-white/20 p-3 rounded-full text-2xl">
+                    <i class="fa-solid font-baby fa-baby-carriage"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide">ระบบบริหารจัดการสต็อกน้ำนมแม่มณฑิรา</h1>
+                    <h1 class="text-xl md:text-2xl font-bold leading-tight">ระบบบริหารจัดการสต็อกน้ำนมแม่มณฑิรา</h1>
                     <p class="text-xs text-pink-100">Montira Breastmilk Stock Management System</p>
                 </div>
             </div>
-            <div class="text-xs bg-pink-600 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-inner">
-                <i class="fa-solid fa-clock"></i>
-                <span id="current-time">--/--/---- --:--</span>
+            <div class="text-right text-xs bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
+                <i class="fa-regular fa-clock mr-1"></i> <span id="current-time"></span>
             </div>
         </div>
     </header>
 
+    <!-- Main Container -->
     <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
 
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 flex items-center space-x-3">
-                <div class="bg-pink-100 p-3 rounded-xl text-pink-600">
-                    <i class="fa-solid fa-bottle-droplet text-2xl"></i>
-                </div>
+        <!-- Sync Status Banner -->
+        <div id="sync-banner" class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl flex items-center justify-between text-sm shadow-sm hidden">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-spinner fa-spin text-blue-500"></i>
+                <span>กำลังเชื่อมต่อซิงค์ข้อมูลกับ Google Sheets...</span>
+            </div>
+        </div>
+
+        <!-- Metric Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Total Stock -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-pink-100 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-slate-500 font-medium">รวมถุงคงเหลือ</p>
-                    <p class="text-2xl font-bold text-slate-800" id="stat-total-bags">0 <span class="text-xs font-normal text-slate-500">ถุง</span></p>
+                    <p class="text-gray-500 text-xs font-medium">น้ำนมคงเหลือรวมทั้งหมด</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-total-oz">0.0 <span class="text-sm font-normal text-gray-500">oz</span></h3>
+                    <p class="text-xs text-pink-500 font-medium mt-1" id="dash-total-ml">≈ 0 ml (0 ถุง)</p>
+                </div>
+                <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 text-xl">
+                    <i class="fa-solid fa-bottle-droplet"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-100 flex items-center space-x-3">
-                <div class="bg-blue-100 p-3 rounded-xl text-blue-600">
-                    <i class="fa-solid fa-glass-water text-2xl"></i>
-                </div>
+            <!-- Warning Expiring Soon -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-amber-100 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-slate-500 font-medium">รวมปริมาณคงเหลือ</p>
-                    <p class="text-2xl font-bold text-slate-800" id="stat-total-oz">0.0 <span class="text-xs font-normal text-slate-500">oz</span></p>
+                    <p class="text-gray-500 text-xs font-medium">ใกล้หมดอายุ (ภายใน 10 วัน)</p>
+                    <h3 class="text-2xl font-bold text-amber-600 mt-1" id="dash-warning-bags">0 <span class="text-sm font-normal text-gray-500">ถุง</span></h3>
+                    <p class="text-xs text-amber-500 font-medium mt-1" id="dash-warning-oz">0.0 oz (ควรใช้ก่อน)</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100 flex items-center space-x-3">
-                <div class="bg-amber-100 p-3 rounded-xl text-amber-600">
-                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
-                </div>
+            <!-- Total Lots Count -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-purple-100 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-slate-500 font-medium">ใกล้หมดอายุ (&le;10 วัน)</p>
-                    <p class="text-2xl font-bold text-amber-600" id="stat-expiring-soon">0 <span class="text-xs font-normal text-slate-500">ถุง</span></p>
+                    <p class="text-gray-500 text-xs font-medium">จำนวน Lot คงเหลือในสต็อก</p>
+                    <h3 class="text-2xl font-bold text-purple-600 mt-1" id="dash-total-lots">0 <span class="text-sm font-normal text-gray-500">รายการ</span></h3>
+                    <p class="text-xs text-purple-400 font-medium mt-1">พร้อมใช้งาน</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-500 text-xl">
+                    <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-red-100 flex items-center space-x-3">
-                <div class="bg-red-100 p-3 rounded-xl text-red-600">
-                    <i class="fa-solid fa-skull-crossbones text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-500 font-medium">หมดอายุแล้ว</p>
-                    <p class="text-2xl font-bold text-red-600" id="stat-expired">0 <span class="text-xs font-normal text-slate-500">ถุง</span></p>
-                </div>
-            </div>
-        </section>
+        <!-- Form Sections (2 Columns) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <section class="grid md:grid-cols-2 gap-6">
-            <!-- Form 1: Stock In (จัดเก็บน้ำนมเข้า) -->
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-pink-100">
-                <div class="flex items-center space-x-2 border-b border-pink-100 pb-3 mb-4">
-                    <i class="fa-solid fa-square-plus text-pink-500 text-lg"></i>
-                    <h2 class="font-bold text-slate-800 text-lg">บันทึกจัดเก็บเข้า (Stock In)</h2>
+            <!-- 1. Stock In Form -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-pink-100">
+                <div class="flex items-center space-x-2 border-b border-gray-100 pb-3 mb-4">
+                    <span class="w-7 h-7 bg-pink-500 text-white rounded-lg flex items-center justify-center text-xs font-bold">
+                        <i class="fa-solid fa-plus"></i>
+                    </span>
+                    <h2 class="text-lg font-bold text-gray-800">บันทึกจัดเก็บเข้า (Stock In)</h2>
                 </div>
 
                 <form id="form-stock-in" onsubmit="handleStockIn(event)" class="space-y-4">
-                    <!-- Lot No. 4-Digit PIN Input -->
+                    <!-- Lot No. 4 Digit PIN -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-2">
-                            หมายเลข Lot (ตัวเลข 4 หลัก) <span class="text-red-500">*</span>
-                        </label>
-                        <div class="flex items-center gap-2" id="lot-in-container">
-                            <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-in w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none transition">
-                            <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-in w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none transition">
-                            <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-in w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none transition">
-                            <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-in w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none transition">
-                            <button type="button" onclick="clearLotInputs('lot-digit-in')" class="text-xs text-slate-400 hover:text-red-500 ml-2 px-2 py-1 rounded">
-                                <i class="fa-solid fa-rotate-left"></i> ล้าง
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">หมายเลข Lot (ตัวเลข 4 หลัก) <span class="text-red-500">*</span></label>
+                        <div class="flex items-center space-x-2">
+                            <div class="flex space-x-2" id="in-pin-container">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box in-pin" required onkeyup="handlePinInput(this, 0, 'in-pin')" onpaste="handlePinPaste(event, 'in-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box in-pin" required onkeyup="handlePinInput(this, 1, 'in-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box in-pin" required onkeyup="handlePinInput(this, 2, 'in-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box in-pin" required onkeyup="handlePinInput(this, 3, 'in-pin')">
+                            </div>
+                            <button type="button" onclick="clearPin('in-pin')" class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1">
+                                <i class="fa-solid fa-rotate-left mr-1"></i>ล้าง
                             </button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Date & Auto Expiry -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">วันที่ปั๊ม/เก็บ <span class="text-red-500">*</span></label>
-                            <input type="date" id="in-pump-date" required onchange="calculateExpDate()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">วันที่ปั๊ม/เก็บ <span class="text-red-500">*</span></label>
+                            <input type="date" id="in-date" required onchange="calculateExpiryDate()" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">วันหมดอายุ (อัตโนมัติ 3 เดือน)</label>
-                            <input type="date" id="in-exp-date" readonly class="w-full px-3 py-2 text-sm bg-slate-100 text-slate-500 border border-slate-200 rounded-xl cursor-not-allowed">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ปริมาณต่อถุง (oz) <span class="text-red-500">*</span></label>
-                            <input type="number" step="0.1" min="0.1" id="in-volume" placeholder="เช่น 4.5" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวน (ถุง) <span class="text-red-500">*</span></label>
-                            <input type="number" min="1" value="1" id="in-qty" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">วันหมดอายุ (อัตโนมัติ 3 เดือน)</label>
+                            <input type="text" id="in-expiry" readonly class="w-full px-3 py-2 text-sm bg-gray-50 text-gray-600 border border-gray-200 rounded-xl font-medium cursor-not-allowed">
                         </div>
                     </div>
 
+                    <!-- Amount oz & Bags -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">ปริมาณต่อถุง (oz) <span class="text-red-500">*</span></label>
+                            <input type="number" id="in-amount-oz" step="0.1" min="0.1" placeholder="เช่น 4.5" required class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">จำนวน (ถุง) <span class="text-red-500">*</span></label>
+                            <input type="number" id="in-bags" min="1" value="1" required class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Note -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">หมายเหตุเพิ่มเติม</label>
-                        <input type="text" id="in-note" placeholder="เช่น ช่องแช่แข็งชั้นบน" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:bg-white focus:outline-none">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">หมายเหตุเพิ่มเติม</label>
+                        <input type="text" id="in-note" placeholder="เช่น ช่องแช่แข็งชั้นบน" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
                     </div>
 
-                    <button type="submit" class="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2">
+                    <button type="submit" id="btn-submit-in" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>บันทึกน้ำนมเข้าสต็อก</span>
                     </button>
                 </form>
             </div>
 
-            <!-- Form 2: Stock Out (จำหน่าย/ใช้น้ำนมออก) -->
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-pink-100 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center space-x-2 border-b border-pink-100 pb-3 mb-4">
-                        <i class="fa-solid fa-square-minus text-amber-500 text-lg"></i>
-                        <h2 class="font-bold text-slate-800 text-lg">เบิกใช้งาน/จำหน่ายออก (Stock Out)</h2>
+            <!-- 2. Stock Out Form -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-100">
+                <div class="flex items-center space-x-2 border-b border-gray-100 pb-3 mb-4">
+                    <span class="w-7 h-7 bg-amber-500 text-white rounded-lg flex items-center justify-center text-xs font-bold">
+                        <i class="fa-solid fa-minus"></i>
+                    </span>
+                    <h2 class="text-lg font-bold text-gray-800">เบิกใช้งาน/จำหน่ายออก (Stock Out)</h2>
+                </div>
+
+                <form id="form-stock-out" onsubmit="handleStockOut(event)" class="space-y-4">
+                    <!-- Lot No. 4 Digit PIN -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">ระบุ Lot No. ที่ต้องการเบิก (ตัวเลข 4 หลัก) <span class="text-red-500">*</span></label>
+                        <div class="flex items-center space-x-2">
+                            <div class="flex space-x-2" id="out-pin-container">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box out-pin" required onkeyup="handlePinInput(this, 0, 'out-pin')" onpaste="handlePinPaste(event, 'out-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box out-pin" required onkeyup="handlePinInput(this, 1, 'out-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box out-pin" required onkeyup="handlePinInput(this, 2, 'out-pin')">
+                                <input type="text" maxlength="1" inputmode="numeric" class="pin-box out-pin" required onkeyup="handlePinInput(this, 3, 'out-pin')">
+                            </div>
+                            <button type="button" onclick="clearPin('out-pin')" class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1">
+                                <i class="fa-solid fa-rotate-left mr-1"></i>ล้าง
+                            </button>
+                        </div>
                     </div>
 
-                    <form id="form-stock-out" onsubmit="handleStockOut(event)" class="space-y-4">
-                        <!-- Lot No. 4-Digit PIN Input for Stock Out -->
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-2">
-                                ระบุ Lot No. ที่ต้องการเบิก (ตัวเลข 4 หลัก) <span class="text-red-500">*</span>
-                            </label>
-                            <div class="flex items-center gap-2" id="lot-out-container">
-                                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-out w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
-                                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-out w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
-                                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-out w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
-                                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" required class="lot-digit-out w-12 h-12 text-center text-xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
-                                <button type="button" onclick="clearLotInputs('lot-digit-out')" class="text-xs text-slate-400 hover:text-red-500 ml-2 px-2 py-1 rounded">
-                                    <i class="fa-solid fa-rotate-left"></i> ล้าง
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Bags Out -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">จำนวนถุงที่เบิกออก <span class="text-red-500">*</span></label>
+                        <input type="number" id="out-bags" min="1" value="1" required class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
 
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนถุงที่เบิกออก <span class="text-red-500">*</span></label>
-                            <input type="number" min="1" value="1" id="out-qty" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
-                        </div>
+                    <!-- Reason / Note -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">หมายเหตุการเบิก</label>
+                        <input type="text" id="out-note" placeholder="เช่น น้องดื่มรอบดึก" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
 
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">หมายเหตุการเบิก</label>
-                            <input type="text" id="out-note" placeholder="เช่น น้องดื่มรอบดึก" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
-                        </div>
+                    <button type="submit" id="btn-submit-out" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2 mt-auto">
+                        <i class="fa-solid fa-hand-holding-droplet"></i>
+                        <span>บันทึกการเบิกใช้งาน</span>
+                    </button>
 
-                        <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-hand-holding-droplet"></i>
-                            <span>บันทึกการเบิกใช้งาน</span>
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Info message box -->
-                <div class="mt-4 p-3 bg-pink-50 rounded-xl border border-pink-100 text-xs text-pink-700 flex items-start gap-2">
-                    <i class="fa-solid fa-circle-info mt-0.5"></i>
-                    <span><strong>คำแนะนำ FIFO:</strong> ควรเลือกเบิกถุงน้ำนมตามลำดับวันหมดอายุที่ใกล้ที่สุดก่อนเพื่อสุขอนามัยที่ดีที่สุดของคุณหนู</span>
-                </div>
+                    <!-- FIFO Recommendation Tip -->
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-start space-x-2">
+                        <i class="fa-solid fa-circle-info text-amber-500 mt-0.5"></i>
+                        <span><strong>คำแนะนำ FIFO:</strong> ควรเลือกเบิกถุงน้ำนมตามลำดับวันหมดอายุที่ใกล้ที่สุดก่อนเพื่อสุขอนามัยที่ดีที่สุดของคุณหนู</span>
+                    </div>
+                </form>
             </div>
-        </section>
 
-        <section class="bg-white rounded-2xl shadow-sm border border-pink-100 overflow-hidden">
-            <div class="p-4 sm:p-6 border-b border-pink-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        </div>
+
+        <!-- Stock Table Container -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-list-check text-pink-500 text-lg"></i>
-                    <h2 class="font-bold text-slate-800 text-lg">รายการสต็อกน้ำนมคงเหลือ</h2>
+                    <span class="text-pink-500"><i class="fa-solid fa-list-check text-lg"></i></span>
+                    <h2 class="text-lg font-bold text-gray-800">รายการสต็อกน้ำนมคงเหลือ</h2>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="text" id="search-input" oninput="renderStockTable()" placeholder="ค้นหาตาม Lot No..." class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none">
-                    <button onclick="exportToCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-lg transition flex items-center gap-1">
-                        <i class="fa-solid fa-file-csv"></i> ส่งออก CSV
+
+                <div class="flex items-center space-x-2 w-full md:w-auto">
+                    <!-- Search Field -->
+                    <div class="relative flex-grow md:flex-grow-0">
+                        <input type="text" id="search-input" onkeyup="renderStockTable()" placeholder="ค้นหาตาม Lot No..." class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                    </div>
+
+                    <!-- Export CSV Button -->
+                    <button onclick="exportCSV()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-xl flex items-center space-x-1 border border-gray-200 transition">
+                        <i class="fa-solid fa-file-csv text-green-600"></i>
+                        <span>ส่งออก CSV</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Table for Desktop & Mobile Card layout -->
+            <!-- Table -->
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs sm:text-sm">
-                    <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 border-b border-gray-100">
                         <tr>
-                            <th class="py-3 px-4">Lot No.</th>
-                            <th class="py-3 px-4">วันที่เก็บ</th>
-                            <th class="py-3 px-4">วันหมดอายุ</th>
-                            <th class="py-3 px-4">คงเหลือ (ถุง)</th>
-                            <th class="py-3 px-4">ปริมาณ (oz/ถุง)</th>
-                            <th class="py-3 px-4">รวม (oz)</th>
-                            <th class="py-3 px-4">สถานะ</th>
-                            <th class="py-3 px-4 text-center">จัดการ</th>
+                            <th class="px-4 py-3">Lot No.</th>
+                            <th class="px-4 py-3">วันที่เก็บ</th>
+                            <th class="px-4 py-3">วันหมดอายุ</th>
+                            <th class="px-4 py-3">คงเหลือ (ถุง)</th>
+                            <th class="px-4 py-3">ปริมาณ (oz/ถุง)</th>
+                            <th class="px-4 py-3">รวม (oz)</th>
+                            <th class="px-4 py-3">สถานะ</th>
+                            <th class="px-4 py-3 text-center">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody id="stock-table-body" class="divide-y divide-slate-100">
-                        <!-- Dynamic Content Generated by JavaScript -->
+                    <tbody id="stock-table-body" class="divide-y divide-gray-100">
+                        <!-- Content Rendered by JS -->
                     </tbody>
                 </table>
             </div>
-
-            <!-- Empty State -->
-            <div id="empty-state" class="hidden text-center py-12 px-4">
-                <div class="w-16 h-16 bg-pink-100 text-pink-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                    <i class="fa-solid fa-box-open"></i>
-                </div>
-                <p class="text-slate-600 font-medium">ยังไม่มีข้อมูลน้ำนมในสต็อก</p>
-                <p class="text-xs text-slate-400 mt-1">เริ่มต้นบันทึกจัดเก็บน้ำนมเข้าได้จากแบบฟอร์มด้านบน</p>
-            </div>
-        </section>
+        </div>
 
     </main>
 
-    <!-- Notification Toast Modal -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
+    <!-- JavaScript Application Logic -->
     <script>
-        // Data Structure
-        let stockData = [];
+        // Google Apps Script Web App URL
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4zwPgZEVfhK7cyCJse2sVvWhA6EallpGSAej_eEPUnvu2-E2NGuiHHlqUq9QHTxrZiw/exec";
 
-        // App Initialization
-        window.onload = function() {
+        // Global State
+        let milkStock = JSON.parse(localStorage.getItem('montira_milk_stock')) || [
+            { id: "0001", bags: 1, amountOz: 2.0, producedAt: "2026-10-04", expiresAt: "2027-01-04", note: "" },
+            { id: "0003", bags: 1, amountOz: 9.0, producedAt: "2026-10-04", expiresAt: "2027-01-04", note: "" }
+        ];
+
+        // Init App
+        document.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setInterval(updateClock, 1000);
-
-            // Set default date to today for pump date
+            
+            // Set default date to today
             const today = new Date().toISOString().split('T')[0];
-            const pumpInput = document.getElementById('in-pump-date');
-            pumpInput.value = today;
-            calculateExpDate();
+            document.getElementById('in-date').value = today;
+            calculateExpiryDate();
 
-            // Setup OTP style PIN input auto-focus
-            setupPinInputs('lot-digit-in');
-            setupPinInputs('lot-digit-out');
+            // Load data from Google Sheets if available
+            fetchFromGoogleSheets();
+            renderStockTable();
+        });
 
-            // Load data from LocalStorage
-            loadStockData();
-        };
-
-        // Real-time Clock
+        // Update Clock
         function updateClock() {
             const now = new Date();
-            const dateStr = now.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById('current-time').textContent = `${dateStr} ${timeStr}`;
+            const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('current-time').innerText = `${thaiDate} ${time}`;
         }
 
-        // Setup 4-Digit Box Input Behaviors
-        function setupPinInputs(className) {
-            const inputs = Array.from(document.querySelectorAll(`.${className}`));
-            inputs.forEach((input, index) => {
-                // Keydown event (handles backspace navigation)
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace') {
-                        if (!input.value && index > 0) {
-                            inputs[index - 1].focus();
-                            inputs[index - 1].value = '';
-                        }
-                    }
-                });
+        // Auto Calculate Expiry (+3 Months)
+        function calculateExpiryDate() {
+            const dateInput = document.getElementById('in-date').value;
+            if (!dateInput) return;
 
-                // Input event (handles forward focus and numeric filter)
-                input.addEventListener('input', (e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    e.target.value = val;
-
-                    if (val && index < inputs.length - 1) {
-                        inputs[index + 1].focus();
-                    }
-                });
-
-                // Paste event (handles pasting 4 digits)
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim().replace(/[^0-9]/g, '');
-                    if (pasteData) {
-                        const digits = pasteData.slice(0, 4).split('');
-                        digits.forEach((digit, i) => {
-                            if (inputs[i]) {
-                                inputs[i].value = digit;
-                            }
-                        });
-                        const nextIdx = Math.min(digits.length, inputs.length - 1);
-                        inputs[nextIdx].focus();
-                    }
-                });
-            });
-        }
-
-        // Helper to clear PIN inputs
-        function clearLotInputs(className) {
-            const inputs = document.querySelectorAll(`.${className}`);
-            inputs.forEach(input => input.value = '');
-            if(inputs[0]) inputs[0].focus();
-        }
-
-        // Helper to get combined PIN value
-        function getLotValue(className) {
-            const inputs = Array.from(document.querySelectorAll(`.${className}`));
-            return inputs.map(i => i.value.trim()).join('');
-        }
-
-        // Calculate Expiration Date (+3 months)
-        function calculateExpDate() {
-            const pumpDateVal = document.getElementById('in-pump-date').value;
-            if (!pumpDateVal) return;
-
-            const pumpDate = new Date(pumpDateVal);
-            // Add 3 months
-            const expDate = new Date(pumpDate);
+            const prodDate = new Date(dateInput);
+            const expDate = new Date(prodDate);
             expDate.setMonth(expDate.getMonth() + 3);
 
-            document.getElementById('in-exp-date').value = expDate.toISOString().split('T')[0];
+            const year = expDate.getFullYear();
+            const month = String(expDate.getMonth() + 1).padStart(2, '0');
+            const day = String(expDate.getDate()).padStart(2, '0');
+
+            document.getElementById('in-expiry').value = `${year}-${month}-${day}`;
         }
 
-        // Save & Load LocalStorage
-        function saveStockData() {
-            localStorage.setItem('montira_milk_stock', JSON.stringify(stockData));
-            updateDashboard();
-            renderStockTable();
-        }
-
-        function loadStockData() {
-            const data = localStorage.getItem('montira_milk_stock');
-            if (data) {
-                try {
-                    stockData = JSON.parse(data);
-                } catch (e) {
-                    stockData = [];
-                }
-            } else {
-                stockData = [];
+        // PIN Code Input Controls
+        function handlePinInput(element, index, className) {
+            element.value = element.value.replace(/[^0-9]/g, ''); // Number only
+            const inputs = document.getElementsByClassName(className);
+            
+            if (element.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
             }
-            updateDashboard();
-            renderStockTable();
         }
 
-        // Handle Stock In Form Submission
-        function handleStockIn(e) {
-            e.preventDefault();
-            const lotNo = getLotValue('lot-digit-in');
+        function handlePinPaste(event, className) {
+            event.preventDefault();
+            const pasteData = (event.clipboardData || window.clipboardData).getData('text').trim();
+            if (/^\d{4}$/.test(pasteData)) {
+                const inputs = document.getElementsByClassName(className);
+                for (let i = 0; i < 4; i++) {
+                    inputs[i].value = pasteData[i];
+                }
+                inputs[3].focus();
+            }
+        }
 
-            if (lotNo.length < 4) {
-                showToast('กรุณากรอก Lot No. ให้ครบทั้ง 4 หลัก', 'error');
+        function clearPin(className) {
+            const inputs = document.getElementsByClassName(className);
+            for (let input of inputs) {
+                input.value = '';
+            }
+            inputs[0].focus();
+        }
+
+        function getPinValue(className) {
+            const inputs = document.getElementsByClassName(className);
+            let pin = '';
+            for (let input of inputs) {
+                pin += input.value;
+            }
+            return pin;
+        }
+
+        // Handle Stock In
+        function handleStockIn(event) {
+            event.preventDefault();
+            const lotNo = getPinValue('in-pin');
+            if (lotNo.length !== 4) {
+                alert('กรุณากรอกหมายเลข Lot ตัวเลขให้ครบ 4 หลัก');
                 return;
             }
 
-            const pumpDate = document.getElementById('in-pump-date').value;
-            const expDate = document.getElementById('in-exp-date').value;
-            const volume = parseFloat(document.getElementById('in-volume').value);
-            const qty = parseInt(document.getElementById('in-qty').value);
+            const date = document.getElementById('in-date').value;
+            const expiry = document.getElementById('in-expiry').value;
+            const amountOz = parseFloat(document.getElementById('in-amount-oz').value);
+            const bags = parseInt(document.getElementById('in-bags').value);
             const note = document.getElementById('in-note').value;
 
-            // Check if Lot No already exists
-            const existingIndex = stockData.findIndex(item => item.lotNo === lotNo);
-
-            if (existingIndex > -1) {
-                // Update existing lot quantity
-                stockData[existingIndex].qty += qty;
-                stockData[existingIndex].note = note || stockData[existingIndex].note;
-                showToast(`เพิ่มจำนวนใน Lot #${lotNo} สำเร็จ (+${qty} ถุง)`, 'success');
+            // Check if Lot already exists
+            const existingIndex = milkStock.findIndex(item => item.id === lotNo);
+            if (existingIndex !== -1) {
+                milkStock[existingIndex].bags += bags;
             } else {
-                // Add new lot
-                stockData.push({
-                    id: Date.now().toString(),
-                    lotNo: lotNo,
-                    pumpDate: pumpDate,
-                    expDate: expDate,
-                    volume: volume,
-                    qty: qty,
+                milkStock.push({
+                    id: lotNo,
+                    bags: bags,
+                    amountOz: amountOz,
+                    producedAt: date,
+                    expiresAt: expiry,
                     note: note
                 });
-                showToast(`บันทึก Lot #${lotNo} เข้าสต็อกเรียบร้อย`, 'success');
             }
 
-            saveStockData();
-
-            // Reset Form Inputs
-            document.getElementById('form-stock-in').reset();
-            clearLotInputs('lot-digit-in');
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('in-pump-date').value = today;
-            calculateExpDate();
+            saveAndSync('stockIn', { id: lotNo, amountOz, bags, date, expiry, note });
+            clearPin('in-pin');
+            document.getElementById('in-amount-oz').value = '';
+            document.getElementById('in-note').value = '';
         }
 
-        // Handle Stock Out Form Submission
-        function handleStockOut(e) {
-            e.preventDefault();
-            const lotNo = getLotValue('lot-digit-out');
-            const qtyToRemove = parseInt(document.getElementById('out-qty').value);
-
-            if (lotNo.length < 4) {
-                showToast('กรุณากรอก Lot No. ให้ครบทั้ง 4 หลัก', 'error');
+        // Handle Stock Out
+        function handleStockOut(event) {
+            event.preventDefault();
+            const lotNo = getPinValue('out-pin');
+            if (lotNo.length !== 4) {
+                alert('กรุณากรอกหมายเลข Lot ตัวเลขให้ครบ 4 หลัก');
                 return;
             }
 
-            const itemIndex = stockData.findIndex(item => item.lotNo === lotNo);
+            const bagsToDeduct = parseInt(document.getElementById('out-bags').value);
+            const existingIndex = milkStock.findIndex(item => item.id === lotNo);
 
-            if (itemIndex === -1) {
-                showToast(`ไม่พบรหัส Lot #${lotNo} ในระบบ`, 'error');
+            if (existingIndex === -1) {
+                alert(`ไม่พบรายการ Lot No. #${lotNo} ในระบบสต็อก`);
                 return;
             }
 
-            const item = stockData[itemIndex];
-
-            if (item.qty < qtyToRemove) {
-                showToast(`จำนวนถุงใน Lot #${lotNo} มีไม่พอ (คงเหลือ ${item.qty} ถุง)`, 'error');
+            if (milkStock[existingIndex].bags < bagsToDeduct) {
+                alert(`จำนวนถุงคงเหลือใน Lot #${lotNo} มีเพียง ${milkStock[existingIndex].bags} ถุง ไม่พอสำหรับการเบิก ${bagsToDeduct} ถุง`);
                 return;
             }
 
-            item.qty -= qtyToRemove;
-
-            if (item.qty === 0) {
-                stockData.splice(itemIndex, 1);
-                showToast(`เบิกใช้งาน Lot #${lotNo} หมดเรียบร้อยแล้ว`, 'info');
-            } else {
-                showToast(`เบิกใช้งาน Lot #${lotNo} ออก ${qtyToRemove} ถุง (คงเหลือ ${item.qty} ถุง)`, 'success');
+            milkStock[existingIndex].bags -= bagsToDeduct;
+            if (milkStock[existingIndex].bags <= 0) {
+                milkStock.splice(existingIndex, 1);
             }
 
-            saveStockData();
-
-            // Reset Form Inputs
-            document.getElementById('form-stock-out').reset();
-            clearLotInputs('lot-digit-out');
+            saveAndSync('stockOut', { id: lotNo, bags: bagsToDeduct });
+            clearPin('out-pin');
+            document.getElementById('out-note').value = '';
         }
 
-        // Delete Whole Lot Manually
-        function deleteLot(id) {
-            const item = stockData.find(i => i.id === id);
-            if (!item) return;
-
-            if (confirm(`คุณต้องการลบ Lot #${item.lotNo} ออกจากระบบใช่หรือไม่?`)) {
-                stockData = stockData.filter(i => i.id !== id);
-                saveStockData();
-                showToast(`ลบ Lot #${item.lotNo} เรียบร้อยแล้ว`, 'info');
+        // Delete Single Lot directly
+        function deleteLot(lotId) {
+            if (confirm(`คุณต้องการลบรายการ Lot No. #${lotId} ออกใช่หรือไม่?`)) {
+                milkStock = milkStock.filter(item => item.id !== lotId);
+                saveAndSync('delete', { id: lotId });
             }
         }
 
-        // Render Dashboard Statistics
-        function updateDashboard() {
-            let totalBags = 0;
-            let totalOz = 0;
-            let expiringSoon = 0;
-            let expired = 0;
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            stockData.forEach(item => {
-                totalBags += item.qty;
-                totalOz += (item.qty * item.volume);
-
-                const exp = new Date(item.expDate);
-                exp.setHours(0, 0, 0, 0);
-
-                const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
-
-                if (diffDays < 0) {
-                    expired += item.qty;
-                } else if (diffDays <= 10) {
-                    expiringSoon += item.qty;
-                }
-            });
-
-            document.getElementById('stat-total-bags').innerHTML = `${totalBags} <span class="text-xs font-normal text-slate-500">ถุง</span>`;
-            document.getElementById('stat-total-oz').innerHTML = `${totalOz.toFixed(1)} <span class="text-xs font-normal text-slate-500">oz</span>`;
-            document.getElementById('stat-expiring-soon').innerHTML = `${expiringSoon} <span class="text-xs font-normal text-slate-500">ถุง</span>`;
-            document.getElementById('stat-expired').innerHTML = `${expired} <span class="text-xs font-normal text-slate-500">ถุง</span>`;
-        }
-
-        // Render Stock Table
+        // Render Stock Table & Dashboard Metrics
         function renderStockTable() {
             const tbody = document.getElementById('stock-table-body');
-            const emptyState = document.getElementById('empty-state');
-            const searchQuery = document.getElementById('search-input').value.trim();
-
+            const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
             tbody.innerHTML = '';
 
-            // Filter data if search query exists
-            const filteredData = stockData.filter(item => item.lotNo.includes(searchQuery));
-
-            if (filteredData.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            // Sort by Expiration Date ASC (FIFO)
-            filteredData.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
+            let totalOz = 0;
+            let totalBags = 0;
+            let warningBags = 0;
+            let warningOz = 0;
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            filteredData.forEach(item => {
-                const exp = new Date(item.expDate);
-                exp.setHours(0, 0, 0, 0);
-                const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+            // Sort by Expiry Date (FIFO)
+            milkStock.sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+
+            milkStock.forEach(item => {
+                if (searchQuery && !item.id.toLowerCase().includes(searchQuery)) {
+                    return;
+                }
+
+                const expDate = new Date(item.expiresAt);
+                const diffTime = expDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                const itemTotalOz = item.bags * item.amountOz;
+                totalOz += itemTotalOz;
+                totalBags += item.bags;
 
                 let statusBadge = '';
                 if (diffDays < 0) {
-                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">หมดอายุ (${Math.abs(diffDays)} วันก่อน)</span>`;
+                    statusBadge = `<span class="bg-red-100 text-red-600 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-circle-xmark mr-1"></i>หมดอายุแล้ว</span>`;
                 } else if (diffDays <= 10) {
-                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 animate-pulse">ใกล้หมดอายุ (อีก ${diffDays} วัน)</span>`;
+                    statusBadge = `<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>เตือน (อีก ${diffDays} วัน)</span>`;
+                    warningBags += item.bags;
+                    warningOz += itemTotalOz;
                 } else {
-                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">ปกติ (อีก ${diffDays} วัน)</span>`;
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold">ปกติ (อีก ${diffDays} วัน)</span>`;
                 }
 
+                // Format Thai Date
+                const prodDateStr = new Date(item.producedAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+                const expDateStr = new Date(item.expiresAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.className = diffDays <= 10 ? 'bg-amber-50/40 hover:bg-amber-50' : 'hover:bg-gray-50';
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-bold text-pink-600">
-                        <span class="bg-pink-50 border border-pink-200 px-2.5 py-1 rounded-lg tracking-wider font-mono text-sm">#${item.lotNo}</span>
-                        ${item.note ? `<p class="text-[10px] text-slate-400 font-normal mt-0.5">${item.note}</p>` : ''}
-                    </td>
-                    <td class="py-3 px-4 text-slate-600">${formatThaiDate(item.pumpDate)}</td>
-                    <td class="py-3 px-4 font-medium text-slate-800">${formatThaiDate(item.expDate)}</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 text-sm">${item.qty} ถุง</td>
-                    <td class="py-3 px-4 text-slate-600">${item.volume} oz</td>
-                    <td class="py-3 px-4 font-semibold text-blue-600">${(item.qty * item.volume).toFixed(1)} oz</td>
-                    <td class="py-3 px-4">${statusBadge}</td>
-                    <td class="py-3 px-4 text-center">
-                        <button onclick="deleteLot('${item.id}')" title="ลบรายการนี้" class="text-slate-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50">
+                    <td class="px-4 py-3 font-bold text-pink-600">#${item.id}</td>
+                    <td class="px-4 py-3">${prodDateStr}</td>
+                    <td class="px-4 py-3 font-medium">${expDateStr}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800">${item.bags} ถุง</td>
+                    <td class="px-4 py-3">${item.amountOz} oz</td>
+                    <td class="px-4 py-3 font-bold text-blue-600">${itemTotalOz.toFixed(1)} oz</td>
+                    <td class="px-4 py-3">${statusBadge}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deleteLot('${item.id}')" class="text-gray-400 hover:text-red-500 transition p-1">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Update Metrics Dashboard
+            document.getElementById('dash-total-oz').innerText = totalOz.toFixed(1);
+            document.getElementById('dash-total-ml').innerText = `≈ ${(totalOz * 29.5735).toFixed(0)} ml (${totalBags} ถุง)`;
+            document.getElementById('dash-warning-bags').innerText = warningBags;
+            document.getElementById('dash-warning-oz').innerText = `${warningOz.toFixed(1)} oz (ควรใช้ก่อน)`;
+            document.getElementById('dash-total-lots').innerText = milkStock.length;
         }
 
-        // Thai Date Formatter Helper
-        function formatThaiDate(dateString) {
-            if (!dateString) return '-';
-            const d = new Date(dateString);
-            return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
-        }
+        // LocalStorage & Google Sheets Sync
+        function saveAndSync(action, payload) {
+            localStorage.setItem('montira_milk_stock', JSON.stringify(milkStock));
+            renderStockTable();
 
-        // Export CSV Function
-        function exportToCSV() {
-            if (stockData.length === 0) {
-                showToast('ไม่มีข้อมูลสต็อกสำหรับส่งออก', 'error');
-                return;
+            // Send Data to Google Sheets
+            if (GOOGLE_SCRIPT_URL) {
+                const banner = document.getElementById('sync-banner');
+                banner.classList.remove('hidden');
+
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...payload, currentStock: milkStock })
+                }).then(() => {
+                    setTimeout(() => banner.classList.add('hidden'), 1000);
+                }).catch(err => {
+                    console.error('Sync Error:', err);
+                    banner.classList.add('hidden');
+                });
             }
+        }
 
-            let csvContent = "\uFEFF"; // UTF-8 BOM
-            csvContent += "Lot No,วันที่เก็บ,วันหมดอายุ,จำนวนถุง,ปริมาณต่อถุง(oz),รวมปริมาณ(oz),หมายเหตุ\n";
+        // Fetch Data from Google Sheets
+        function fetchFromGoogleSheets() {
+            if (!GOOGLE_SCRIPT_URL) return;
 
-            stockData.forEach(item => {
-                const totalVol = (item.qty * item.volume).toFixed(1);
-                csvContent += `"${item.lotNo}","${item.pumpDate}","${item.expDate}",${item.qty},${item.volume},${totalVol},"${item.note || ''}"\n`;
+            fetch(GOOGLE_SCRIPT_URL)
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        milkStock = data;
+                        localStorage.setItem('montira_milk_stock', JSON.stringify(milkStock));
+                        renderStockTable();
+                    }
+                })
+                .catch(err => console.log('Google Sheets Fetch fallback to LocalStorage:', err));
+        }
+
+        // Export Stock to CSV File
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // UTF-8 BOM for Thai Language
+            csvContent += "Lot No.,Production Date,Expiry Date,Bags,Amount (oz/bag),Total (oz),Note\n";
+
+            milkStock.forEach(item => {
+                const row = [
+                    `"#${item.id}"`,
+                    item.producedAt,
+                    item.expiresAt,
+                    item.bags,
+                    item.amountOz,
+                    (item.bags * item.amountOz).toFixed(1),
+                    `"${item.note || ''}"`
+                ].join(",");
+                csvContent += row + "\n";
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
+            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
+            link.setAttribute("href", encodedUri);
             link.setAttribute("download", `monthira_milk_stock_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
-
-        // Toast Notification System
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-
-            let bgColor = 'bg-slate-800 text-white';
-            let icon = 'fa-circle-info';
-
-            if (type === 'success') {
-                bgColor = 'bg-emerald-600 text-white';
-                icon = 'fa-circle-check';
-            } else if (type === 'error') {
-                bgColor = 'bg-red-600 text-white';
-                icon = 'fa-circle-exclamation';
-            } else if (type === 'info') {
-                bgColor = 'bg-blue-600 text-white';
-                icon = 'fa-circle-info';
-            }
-
-            toast.className = `pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-xs font-medium transition duration-300 transform translate-y-2 opacity-0 ${bgColor}`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
-
-            container.appendChild(toast);
-
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            });
-
-            // Remove toast after 3 seconds
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
         }
     </script>
 </body>
