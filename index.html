@@ -253,7 +253,7 @@
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear() + 543; // BE Year
+            const year = now.getFullYear() + 543;
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -262,7 +262,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Move cursor focus automatically for Lot digits
         function moveFocus(current, nextId) {
             if (current.value.length >= 1) {
                 document.getElementById(nextId).focus();
@@ -285,7 +284,6 @@
             document.getElementById('out-lot-1').focus();
         }
 
-        // Auto calculate Expiry Date (+3 Months)
         function updateExpiryDate() {
             const dateVal = document.getElementById('in-date').value;
             if (!dateVal) return;
@@ -329,7 +327,14 @@
                 note: document.getElementById('in-note').value
             };
 
-            stockData.push(newItem);
+            // Check duplicate lot
+            const existingIndex = stockData.findIndex(item => item.id === lot);
+            if (existingIndex > -1) {
+                stockData[existingIndex].bags += newItem.bags;
+            } else {
+                stockData.push(newItem);
+            }
+
             renderStock();
             saveAndSync();
 
@@ -381,7 +386,6 @@
             }
         }
 
-        // Render Dashboard & Table
         function renderStock() {
             const tbody = document.getElementById('stock-table-body');
             const emptyState = document.getElementById('empty-state');
@@ -443,18 +447,23 @@
             document.getElementById('dash-expired').innerText = expiredCount;
         }
 
+        // Updated Save & Sync with Web App using Text Blob (bypass CORS restrictions)
         function saveAndSync() {
             localStorage.setItem('breastmilk_stock', JSON.stringify(stockData));
+            const payload = JSON.stringify({ currentStock: stockData });
+            
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ currentStock: stockData })
+                headers: { 'Content-Type': 'text/plain' },
+                body: payload
+            }).then(() => {
+                console.log("Data synced with Google Sheets successfully.");
             }).catch(err => console.error("Sync error:", err));
         }
 
         function fetchFromGoogleSheets() {
-            fetch(GOOGLE_SCRIPT_URL, { redirect: "follow" })
+            fetch(GOOGLE_SCRIPT_URL)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
