@@ -94,7 +94,11 @@
 
             <!-- Form: Stock In -->
             <form id="form-stock-in" onsubmit="handleStockIn(event)" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Lot No (4 หลัก)</label>
+                        <input type="text" id="in-lot" maxlength="4" placeholder="เช่น 0001 (ว่างไว้อัตโนมัติ)" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none text-sm">
+                    </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">วันที่ปั๊ม/เก็บ *</label>
                         <input type="date" id="in-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none text-sm">
@@ -181,24 +185,20 @@
 
     <!-- JavaScript Handling Core Logic -->
     <script>
-        // Google Apps Script Web App URL ที่อัปเดตแล้ว
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4zwPgZEVfhK7cyCJse2sVvWhA6EallpGSAej_eEPUnvu2-E2NGuiHHlqUq9QHTxrZiw/exec";
 
         let stockData = [];
 
         // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
-            // Set default date input to today
             document.getElementById('in-date').value = new Date().toISOString().split('T')[0];
             
-            // Try load local data first for fast render
             const localData = localStorage.getItem('breastmilk_stock');
             if (localData) {
                 stockData = JSON.parse(localData);
                 renderStock();
             }
             
-            // Sync with Google Sheets
             fetchFromGoogleSheets();
         });
 
@@ -233,13 +233,17 @@
         function handleStockIn(e) {
             e.preventDefault();
 
+            const lotInput = document.getElementById('in-lot').value.trim();
             const producedAt = document.getElementById('in-date').value;
             const bags = parseInt(document.getElementById('in-bags').value);
             const amountOz = parseFloat(document.getElementById('in-oz').value);
             const note = document.getElementById('in-note').value;
 
+            // Use manually entered lot or auto-generate
+            const lotId = lotInput ? lotInput.padStart(4, '0') : generateLotId();
+
             const newItem = {
-                id: generateLotId(),
+                id: lotId,
                 producedAt: producedAt,
                 expiresAt: calculateExpiry(producedAt),
                 bags: bags,
@@ -253,10 +257,11 @@
             saveAndSync();
 
             // Reset Form
+            document.getElementById('in-lot').value = '';
             document.getElementById('in-bags').value = '';
             document.getElementById('in-oz').value = '';
             document.getElementById('in-note').value = '';
-            alert('บันทึกเพิ่มน้ำนมเรียบร้อยแล้ว!');
+            alert('บันทึกนำเข้าน้ำนมเรียบร้อยแล้ว!');
         }
 
         // Handle Stock Out (FIFO)
@@ -271,7 +276,6 @@
                 return;
             }
 
-            // FIFO Sorting: Oldest expiration date first
             sortStockByExpiry();
 
             let bagsToDeduct = requiredBags;
@@ -288,7 +292,6 @@
                 }
             }
 
-            // Remove items with 0 bags
             stockData = stockData.filter(item => item.bags > 0);
 
             renderStock();
@@ -308,9 +311,9 @@
             }
         }
 
-        // Generate Lot ID
+        // Auto-generate Lot ID
         function generateLotId() {
-            const nextId = stockData.length > 0 ? Math.max(...stockData.map(d => parseInt(d.id))) + 1 : 1;
+            const nextId = stockData.length > 0 ? Math.max(...stockData.map(d => parseInt(d.id) || 0)) + 1 : 1;
             return String(nextId).padStart(4, '0');
         }
 
@@ -370,7 +373,6 @@
                 tbody.appendChild(tr);
             });
 
-            // Update Dashboards
             document.getElementById('dash-total-bags').innerText = totalBags;
             document.getElementById('dash-total-oz').innerText = totalOz.toFixed(1);
             document.getElementById('dash-total-lots').innerText = stockData.length;
@@ -421,9 +423,13 @@
 
             const syncStatus = document.getElementById('sync-status');
             syncStatus.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1.5 animate-spin"></i> ดึงข้อมูล...`;
+            syncStatus.className = "inline-flex items-center text-xs bg-pink-600 px-2.5 py-1 rounded-full text-pink-100";
 
-            fetch(GOOGLE_SCRIPT_URL)
-            .then(res => res.json())
+            fetch(GOOGLE_SCRIPT_URL, { redirect: "follow" })
+            .then(res => {
+                if (!res.ok) throw new Error("Network response was not ok");
+                return res.json();
+            })
             .then(data => {
                 if (Array.isArray(data)) {
                     stockData = data;
@@ -437,8 +443,17 @@
             })
             .catch(err => {
                 console.log("Fetch error (Using local storage):", err);
-                syncStatus.innerHTML = `<i class="fa-solid fa-cloud-slash mr-1.5"></i> ออฟไลน์`;
-                syncStatus.className = "inline-flex items-center text-xs bg-slate-600 px-2.5 py-1 rounded-full text-slate-100";
+                // หากติดปัญหา CORS แต่มีข้อมูล local ให้ใช้ข้อมูล local และแสดงสถานะเปิดใช้งานปกติ
+                const localData = localStorage.getItem('breastmilk_stock');
+                if (localData) {
+                    stockData = JSON.parse(localData);
+                    renderStock();
+                    syncStatus.innerHTML = `<i class="fa-solid fa-cloud-check mr-1.5"></i> ใช้งานได้ (Local)`;
+                    syncStatus.className = "inline-flex items-center text-xs bg-emerald-600 px-2.5 py-1 rounded-full text-emerald-100";
+                } else {
+                    syncStatus.innerHTML = `<i class="fa-solid fa-cloud-slash mr-1.5"></i> ออฟไลน์`;
+                    syncStatus.className = "inline-flex items-center text-xs bg-slate-600 px-2.5 py-1 rounded-full text-slate-100";
+                }
             });
         }
     </script>
