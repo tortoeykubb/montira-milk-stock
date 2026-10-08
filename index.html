@@ -227,3 +227,261 @@
                             <th class="p-3 text-center">คงเหลือ (ถุง)</th>
                             <th class="p-3 text-center">ปริมาณ (oz/ถุง)</th>
                             <th class="p-3">หมายเหตุ</th>
+                            <th class="p-3 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body" class="divide-y divide-slate-100">
+                        <!-- Data Rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="empty-state" class="p-8 text-center text-slate-400 hidden">
+                <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
+                <p>ยังไม่มีข้อมูลสต็อกน้ำนม</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4zwPgZEVfhK7cyCJse2sVvWhA6EallpGSAej_eEPUnvu2-E2NGuiHHlqUq9QHTxrZiw/exec";
+        let stockData = [];
+
+        // ฟังก์ชันแปลงรูปแบบวันที่ให้เหลือแค่ YYYY-MM-DD
+        function formatDateOnly(dateStr) {
+            if (!dateStr) return '-';
+            let str = String(dateStr);
+            if (str.includes('T')) {
+                str = str.split('T')[0];
+            }
+            return str;
+        }
+
+        // Realtime Clock
+        function updateClock() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear() + 543;
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('current-time').innerText = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function moveFocus(current, nextId) {
+            if (current.value.length >= 1) {
+                document.getElementById(nextId).focus();
+            }
+        }
+
+        function clearLotIn() {
+            document.getElementById('in-lot-1').value = '';
+            document.getElementById('in-lot-2').value = '';
+            document.getElementById('in-lot-3').value = '';
+            document.getElementById('in-lot-4').value = '';
+            document.getElementById('in-lot-1').focus();
+        }
+
+        function clearLotOut() {
+            document.getElementById('out-lot-1').value = '';
+            document.getElementById('out-lot-2').value = '';
+            document.getElementById('out-lot-3').value = '';
+            document.getElementById('out-lot-4').value = '';
+            document.getElementById('out-lot-1').focus();
+        }
+
+        function updateExpiryDate() {
+            const dateVal = document.getElementById('in-date').value;
+            if (!dateVal) return;
+            const d = new Date(dateVal);
+            d.setMonth(d.getMonth() + 3);
+            document.getElementById('in-exp-date').value = d.toISOString().split('T')[0];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('in-date').value = today;
+            updateExpiryDate();
+
+            const localData = localStorage.getItem('breastmilk_stock');
+            if (localData) {
+                stockData = JSON.parse(localData);
+                renderStock();
+            }
+            fetchFromGoogleSheets();
+        });
+
+        // Stock In Handler
+        function handleStockIn(e) {
+            e.preventDefault();
+            const lot = document.getElementById('in-lot-1').value +
+                        document.getElementById('in-lot-2').value +
+                        document.getElementById('in-lot-3').value +
+                        document.getElementById('in-lot-4').value;
+
+            if (lot.length < 4) {
+                alert('กรุณากรอกเลข Lot ให้ครบ 4 หลัก');
+                return;
+            }
+
+            const newItem = {
+                id: lot,
+                producedAt: document.getElementById('in-date').value,
+                expiresAt: document.getElementById('in-exp-date').value,
+                bags: parseInt(document.getElementById('in-bags').value),
+                amountOz: parseFloat(document.getElementById('in-oz').value),
+                note: document.getElementById('in-note').value
+            };
+
+            const existingIndex = stockData.findIndex(item => item.id === lot);
+            if (existingIndex > -1) {
+                stockData[existingIndex].bags += newItem.bags;
+            } else {
+                stockData.push(newItem);
+            }
+
+            renderStock();
+            saveAndSync();
+
+            clearLotIn();
+            document.getElementById('in-oz').value = '';
+            document.getElementById('in-note').value = '';
+            alert(`บันทึกน้ำนมเข้า Lot #${lot} เรียบร้อยแล้ว`);
+        }
+
+        // Stock Out Handler
+        function handleStockOut(e) {
+            e.preventDefault();
+            const lot = document.getElementById('out-lot-1').value +
+                        document.getElementById('out-lot-2').value +
+                        document.getElementById('out-lot-3').value +
+                        document.getElementById('out-lot-4').value;
+
+            const bagsDeduct = parseInt(document.getElementById('out-bags').value);
+            const itemIndex = stockData.findIndex(item => item.id === lot);
+
+            if (itemIndex === -1) {
+                alert(`ไม่พบรายการ Lot #${lot} ในระบบ`);
+                return;
+            }
+
+            if (stockData[itemIndex].bags < bagsDeduct) {
+                alert(`จำนวนถุงไม่พอ (Lot #${lot} คงเหลือ ${stockData[itemIndex].bags} ถุง)`);
+                return;
+            }
+
+            stockData[itemIndex].bags -= bagsDeduct;
+            if (stockData[itemIndex].bags <= 0) {
+                stockData.splice(itemIndex, 1);
+            }
+
+            renderStock();
+            saveAndSync();
+
+            clearLotOut();
+            document.getElementById('out-note').value = '';
+            alert(`เบิกน้ำนม Lot #${lot} เรียบร้อยแล้ว`);
+        }
+
+        function deleteLot(id) {
+            if (confirm(`คุณต้องการลบข้อมูล Lot #${id} หรือไม่?`)) {
+                stockData = stockData.filter(item => item.id !== id);
+                renderStock();
+                saveAndSync();
+            }
+        }
+
+        function renderStock() {
+            const tbody = document.getElementById('stock-table-body');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (stockData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            let totalBags = 0;
+            let totalOz = 0;
+            let expiringSoonCount = 0;
+            let expiredCount = 0;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            stockData.forEach(item => {
+                totalBags += item.bags;
+                totalOz += (item.bags * item.amountOz);
+
+                const cleanExpDateStr = formatDateOnly(item.expiresAt);
+                const expDate = new Date(cleanExpDateStr);
+                expDate.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                    expiredCount += item.bags;
+                } else if (diffDays <= 10) {
+                    expiringSoonCount += item.bags;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-700">#${item.id}</td>
+                    <td class="p-3">${formatDateOnly(item.producedAt)}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold ${diffDays < 0 ? 'bg-rose-100 text-rose-600' : (diffDays <= 10 ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600')}">
+                            ${cleanExpDateStr}
+                        </span>
+                    </td>
+                    <td class="p-3 text-center font-bold text-pink-600">${item.bags}</td>
+                    <td class="p-3 text-center">${item.amountOz}</td>
+                    <td class="p-3 text-slate-500">${item.note || '-'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteLot('${item.id}')" class="text-slate-400 hover:text-rose-500 transition px-2 py-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('dash-total-bags').innerText = totalBags;
+            document.getElementById('dash-total-oz').innerText = totalOz.toFixed(1);
+            document.getElementById('dash-expiring-soon').innerText = expiringSoonCount;
+            document.getElementById('dash-expired').innerText = expiredCount;
+        }
+
+        function saveAndSync() {
+            localStorage.setItem('breastmilk_stock', JSON.stringify(stockData));
+            const payload = JSON.stringify({ currentStock: stockData });
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: payload
+            }).then(() => {
+                console.log("Data synced with Google Sheets successfully.");
+            }).catch(err => console.error("Sync error:", err));
+        }
+
+        function fetchFromGoogleSheets() {
+            fetch(GOOGLE_SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    stockData = data;
+                    renderStock();
+                    localStorage.setItem('breastmilk_stock', JSON.stringify(stockData));
+                }
+            }).catch(err => console.log("Fetch error, using local data", err));
+        }
+    </script>
+</body>
+</html>
