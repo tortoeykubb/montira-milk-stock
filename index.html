@@ -248,6 +248,37 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4zwPgZEVfhK7cyCJse2sVvWhA6EallpGSAej_eEPUnvu2-E2NGuiHHlqUq9QHTxrZiw/exec";
         let stockData = [];
 
+        // ฟังก์ชันรับรองให้กรอกได้เฉพาะตัวเลข และเลื่อน Cursor ไปช่องถัดไปอัตโนมัติ
+        function handleDigitInput(input, nextId) {
+            // กรองเอาเฉพาะตัวเลข 0-9
+            input.value = input.value.replace(/[^0-9]/g, '');
+            
+            // หากพิมพ์ตัวเลขลงไปแล้ว และมีช่องถัดไป ให้ย้าย Cursor ไปทันที
+            if (input.value.length === 1 && nextId) {
+                const nextInput = document.getElementById(nextId);
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select(); // เลือกข้อความทั้งหมดในช่องถัดไปเพื่อให้แก้ไขง่าย
+                }
+            }
+        }
+
+        // รองรับการกด Backspace เพื่อลบและถอยกลับช่องก่อนหน้า
+        function handleKeyDown(e, input, prevId) {
+            if (e.key === 'Backspace') {
+                if (input.value.length === 0 && prevId) {
+                    const prevInput = document.getElementById(prevId);
+                    if (prevInput) {
+                        prevInput.focus();
+                        prevInput.value = ''; // ล้างค่าช่องก่อนหน้าด้วย
+                    }
+                } else if (input.value.length > 0) {
+                    input.value = ''; // หากช่องนี้มีค่าอยู่ ให้ลบค่าในช่องนี้ก่อน
+                    e.preventDefault();
+                }
+            }
+        }
+
         // ฟังก์ชันแปลงรูปแบบวันที่ให้เหลือแค่ YYYY-MM-DD
         function formatDateOnly(dateStr) {
             if (!dateStr) return '-';
@@ -271,12 +302,6 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
-
-        function moveFocus(current, nextId) {
-            if (current.value.length >= 1) {
-                document.getElementById(nextId).focus();
-            }
-        }
 
         function clearLotIn() {
             document.getElementById('in-lot-1').value = '';
@@ -405,6 +430,9 @@
             } else {
                 emptyState.classList.add('hidden');
             }
+
+            // จัดเรียงรายการตามเลข Lot จากมากไปน้อย (เลขล่าสุดอยู่บนสุด)
+            stockData.sort((a, b) => Number(b.id) - Number(a.id));
 
             let totalBags = 0;
             let totalOz = 0;
